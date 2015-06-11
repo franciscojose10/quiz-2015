@@ -113,3 +113,44 @@ exports.destroy = function(req, res) {
     res.redirect('/quizes');
   }).catch(function(error){next(error)});
 };
+
+// GET /quizes/statistics
+exports.statistics = function(req, res){
+  
+  //El número de preguntas
+  models.Quiz.findAll().then(
+    function(quizes) {
+      var numberOfQuestions = quizes.length;
+      //El número de preguntas sin comentarios
+      var questionsWithoutComments = 0;
+      //El número de preguntas con comentarios
+      var questionsWithComments = 0;
+      for(var i = 0; i<quizes.length; i++){
+        quizes[i].getComments().then(function(quizesComment){
+          if(quizesComment.length === 0){
+            questionsWithoutComments++;
+          }
+          else{
+            questionsWithComments++;
+          }
+        });
+      }
+
+      //El número de comentarios totales
+      models.Comment.findAll().then(
+        function(comments) {
+          var numberOfComments = comments.length;
+          //El número medio de comentarios por pregunta
+          var commentsPerQuestion = numberOfComments/numberOfQuestions;
+
+          res.render('quizes/statistics', {numberOfQuestions: numberOfQuestions,
+                                   numberOfComments: numberOfComments,
+                                   commentsPerQuestion: commentsPerQuestion,
+                                   questionsWithoutComments: questionsWithoutComments,
+                                   questionsWithComments: questionsWithComments,
+                                   errors: []});
+        }
+      ).catch(function(error) { next(error);});
+    }
+  ).catch(function(error) { next(error);});
+}
